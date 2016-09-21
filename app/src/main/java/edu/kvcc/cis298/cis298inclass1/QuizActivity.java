@@ -2,6 +2,7 @@ package edu.kvcc.cis298.cis298inclass1;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,6 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class QuizActivity extends AppCompatActivity {
+
+    private static final String TAG = "QuizActivity";
+    private static final String KEY_INDEX = "index";
 
     //Variable to hold the widget controls from the layout
     private Button mTrueButton;
@@ -40,8 +44,20 @@ public class QuizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
+        //Log out that the onCreate method was fired
+        Log.d(TAG, "onCreate(Bundle) called");
+
         //Use findViewById to get a reference to the textview in the layout.
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
+
+        //Check the Bundle to see if it is null. If it is not,
+        //we will fetch out the mCurrentIndex from it using the
+        //same constant key KEY_INDEX that we used to put the
+        //value in the bundle.
+        if (savedInstanceState != null) {
+            mCurrentIndex = savedInstanceState.getInt(KEY_INDEX);
+        }
+
         //Call the updateQuestion method.
         updateQuestion();
 
@@ -121,6 +137,52 @@ public class QuizActivity extends AppCompatActivity {
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
     }
 
+    //This method is called right before onPause is called.
+    //This is where you should use the passed in Bundle to save
+    //the state of the activity. The Bundle has methods on it
+    //to put values in a key => value type of way.
+    //We are using putInt to store the mCurrentIndex in the bundle
+    //under a key of KEY_INDEX. KEY_INDEX is really a const declared
+    //at the top of this class.
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+        Log.i(TAG, "onSavedInstanceState");
+        savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop() called");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy() called");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause() called");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume() called");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart() called");
+    }
+
+
+    //We don't need these
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
