@@ -1,5 +1,7 @@
 package edu.kvcc.cis298.cis298inclass1;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,13 +14,16 @@ import android.widget.Toast;
 
 public class QuizActivity extends AppCompatActivity {
 
+    //These are string keys for the Bundle
     private static final String TAG = "QuizActivity";
     private static final String KEY_INDEX = "index";
+    private static final int REQUEST_CODE_CHEAT = 0;
 
     //Variable to hold the widget controls from the layout
     private Button mTrueButton;
     private Button mFalseButton;
     private Button mNextButton;
+    private Button mCheatButton;
     private TextView mQuestionTextView;
 
     //Our question bank. We are creating new instances of the Question
@@ -38,6 +43,9 @@ public class QuizActivity extends AppCompatActivity {
 
     //Add a index for which question we are on.
     private int mCurrentIndex = 0;
+
+    //Private bool to represent if the person cheated or not
+    private boolean mIsCheater;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,11 +107,51 @@ public class QuizActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //Increment the index, and mod it by the length of the array.
                 mCurrentIndex = (mCurrentIndex + 1) % mQuestionBank.length;
+                //Reset the cheater flag to false.
+                mIsCheater = false;
                 //Call the update question method.
                 updateQuestion();
             }
         });
 
+        //The Cheat Button. Used to launch a new Activity
+        mCheatButton = (Button) findViewById(R.id.cheat_button);
+        mCheatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //Get the current questsions answer out.
+                boolean answerIsTrue = mQuestionBank[mCurrentIndex].isAnswerTrue();
+                //Ask the CheatActivity to return us an Intent that can
+                //get the CheatActivity launched. We ask this by calling a public
+                //static method on the CheatActivity that takes any required
+                //parameters it expects, and then returns the intent object we need.
+                Intent i = CheatActivity.newIntent(QuizActivity.this, answerIsTrue);
+                //Use the intent object to start a new activity
+                startActivityForResult(i, REQUEST_CODE_CHEAT);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        //The result of the previous activity (Cheat for us) did not
+        //end okay with a RESULT_OK status, just return. Don't do any work.
+        if (resultCode != Activity.RESULT_OK) {
+            return;
+        }
+
+        //If the request code that was used when the cheat activity was started
+        //matches the one being sent back to this method, I know I want
+        //do do work related to the cheat activity. Otherwise, it must be from
+        //some other activity.
+        if (requestCode == REQUEST_CODE_CHEAT) {
+            if (data == null) {
+                return;
+            }
+            mIsCheater = CheatActivity.wasAnswerShown(data);
+        }
     }
 
     private void updateQuestion() {
@@ -125,13 +173,17 @@ public class QuizActivity extends AppCompatActivity {
         //to display in the toast message
         int messageResId = 0;
 
-        //If the user's press equals the questions answer
-        if (userPressedTrue == answerIsTrue) {
-            //Set the message to the correct message
-            messageResId = R.string.correct_toast;
+        if (mIsCheater) {
+            messageResId = R.string.judgement_toast;
         } else {
-            //Else the incorrect message
-            messageResId = R.string.incorrect_toast;
+            //If the user's press equals the questions answer
+            if (userPressedTrue == answerIsTrue) {
+                //Set the message to the correct message
+                messageResId = R.string.correct_toast;
+            } else {
+                //Else the incorrect message
+                messageResId = R.string.incorrect_toast;
+            }
         }
         //Make the toast using the assigned message
         Toast.makeText(this, messageResId, Toast.LENGTH_SHORT).show();
